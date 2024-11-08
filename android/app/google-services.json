@@ -1,0 +1,68 @@
+{
+  "project_info": {
+    "project_number": "565725334351",
+    "firebase_url": "https://course-work-faee7-default-rtdb.europe-west1.firebasedatabase.app",
+    "project_id": "course-work-faee7",
+    "storage_bucket": "course-work-faee7.firebasestorage.app"
+  },
+  "client": [
+    {
+      "client_info": {
+        "mobilesdk_app_id": "1:565725334351:android:acbfcec1debc35978f933a",
+        "android_client_info": {
+          "package_name": "com.example.yoga_app"
+        }
+      },
+      "oauth_client": [],
+      "api_key": [
+        {
+          "current_key": "AIzaSyCj9iHiCi1TVIcuKJNAbDsh0SKoJ36vxaI"
+        }
+      ],
+      "services": {
+        "appinvite_service": {
+          "other_platform_oauth_client": []
+        }
+      }
+    },
+    {
+      "client_info": {
+        "mobilesdk_app_id": "1:565725334351:android:92a40ac25a82cef88f933a",
+        "android_client_info": {
+          "package_name": "com.example.yoga_client"
+        }
+      },
+      "oauth_client": [],
+      "api_key": [
+        {
+          "current_key": "AIzaSyCj9iHiCi1TVIcuKJNAbDsh0SKoJ36vxaI"
+        }
+      ],
+      "services": {
+        "appinvite_service": {
+          "other_platform_oauth_client": []
+        }
+      }
+    },
+    {
+      "client_info": {
+        "mobilesdk_app_id": "1:565725334351:android:c327ad11ff58a8458f933a",
+        "android_client_info": {
+          "package_name": "com.example.yoga_flutter"
+        }
+      },
+      "oauth_client": [],
+      "api_key": [
+        {
+          "current_key": "AIzaSyCj9iHiCi1TVIcuKJNAbDsh0SKoJ36vxaI"
+        }
+      ],
+      "services": {
+        "appinvite_service": {
+          "other_platform_oauth_client": []
+        }
+      }
+    }
+  ],
+  "configuration_version": "1"
+}
