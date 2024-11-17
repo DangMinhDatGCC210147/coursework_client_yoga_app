@@ -1,5 +1,7 @@
 import 'package:firebase_auth/firebase_auth.dart';
+import 'package:firebase_database/firebase_database.dart';
 import 'package:flutter/material.dart';
+import '../../models/instructor_model.dart';
 import '../../themes/app_colors.dart';
 import '../../views/widgets/bottom_nav_bar.dart';
 import 'register_screen.dart';
@@ -7,6 +9,7 @@ import 'register_screen.dart';
 class LoginScreen extends StatelessWidget {
   final TextEditingController emailController = TextEditingController();
   final TextEditingController passwordController = TextEditingController();
+  DatabaseReference instructorRef = FirebaseDatabase.instance.ref('instructors');
 
   @override
   Widget build(BuildContext context) {
@@ -37,7 +40,7 @@ class LoginScreen extends StatelessWidget {
                       const SizedBox(height: 5),
                       Center(
                         child: Image.asset(
-                          'assets/images/icon.png', // Hình logo
+                          'assets/images/icon.png',
                           width: 150,
                           height: 150,
                         ),
@@ -180,25 +183,69 @@ class LoginScreen extends StatelessWidget {
     final String email = emailController.text.trim();
     final String password = passwordController.text.trim();
 
+    print('Email: $email');
+    print('Password: $password');
+
     if (email.isEmpty || password.isEmpty) {
       _showSnackBar(context, 'Please fill all fields.');
       return;
     }
 
     try {
+      // Đăng nhập với Firebase Auth
       UserCredential userCredential = await FirebaseAuth.instance
           .signInWithEmailAndPassword(email: email, password: password);
 
       User? user = userCredential.user;
+      print('User ID: ${user?.uid}');
+      print('User email: ${user?.email}');
 
-      if (user != null) {
-        _showSnackBar(context, 'Login successful!');
-        Navigator.pushReplacement(
-          context,
-          MaterialPageRoute(builder: (context) => BottomNavBar()),
-        );
+      // Nếu user không tồn tại
+      if (user == null) {
+        _showSnackBar(context, 'User is not authenticated.');
+        return;
+      }
+      // Truy vấn Firebase Realtime Database theo email
+      DatabaseReference instructorsRef = FirebaseDatabase.instance.ref('instructors');
+      Query query = instructorsRef.orderByChild('email').equalTo(email);
+      DataSnapshot snapshot = await query.get();
+      // In ra giá trị snapshot để kiểm tra dữ liệu trả về từ Firebase
+      //print('Snapshot value: ${snapshot.value}');
+      if (snapshot.exists) {
+        print('Snapshot exists.');
+
+        // Kiểm tra snapshot.value là Map hay List
+        if (snapshot.value is Map) {
+          // Nếu là Map, lấy dữ liệu từ phần tử đầu tiên (bỏ qua key)
+          Map<dynamic, dynamic> userDataMap = Map.from(snapshot.value as Map);
+          var firstUserData = userDataMap.values.first;
+          try {
+            InstructorModel instructor = InstructorModel.fromJson(Map<String, dynamic>.from(firstUserData));
+            print('Instructor data from database: $instructor');
+            int role = instructor.roleId;
+            print('Role ID: $role');
+            if (role == 2) {
+              _showSnackBar(context, 'Login successful!');
+              Navigator.pushReplacement(
+                context,
+                MaterialPageRoute(builder: (context) => BottomNavBar()),
+              );
+            } else {
+              _showSnackBar(context, 'You do not have permission to log in.');
+            }
+          } catch (e) {
+            print('Error converting data: $e');
+            _showSnackBar(context, 'Data format is not correct.');
+          }
+        } else {
+          _showSnackBar(context, 'Data format is not correct.');
+        }
+      } else {
+        print('No matching user found in instructors list.');
+        _showSnackBar(context, 'User not found.');
       }
     } on FirebaseAuthException catch (e) {
+      print('FirebaseAuthException: ${e.code}');
       if (e.code == 'user-not-found') {
         _showSnackBar(context, 'No user found for that email.');
       } else if (e.code == 'wrong-password') {
@@ -211,6 +258,7 @@ class LoginScreen extends StatelessWidget {
         _showSnackBar(context, 'Login failed: ${e.message}');
       }
     } catch (e) {
+      print('Unexpected error: $e');
       _showSnackBar(context, 'An unexpected error occurred: $e');
     }
   }

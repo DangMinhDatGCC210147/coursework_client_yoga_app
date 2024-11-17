@@ -4,7 +4,7 @@ import 'package:firebase_database/firebase_database.dart';
 import 'package:yoga_client/themes/app_colors.dart';
 
 class AccountProfileScreen extends StatelessWidget {
-  final User? user = FirebaseAuth.instance.currentUser; //Get current user
+  final User? user = FirebaseAuth.instance.currentUser;
   final DatabaseReference _instructorRef = FirebaseDatabase.instance.ref().child('instructors');
 
   AccountProfileScreen({Key? key}) : super(key: key);

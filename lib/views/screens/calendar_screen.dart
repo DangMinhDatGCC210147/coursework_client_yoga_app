@@ -23,33 +23,6 @@ class _CalendarScreenState extends State<CalendarScreen> {
   DateTime selectedDate = DateTime.now();
   Map<String, List<Map<String, dynamic>>> classSchedule = {};
 
-  @override
-  void initState(){
-    super.initState();
-    loadClassSchedule();
-  }
-
-  Future<void> loadClassSchedule() async {
-    final snapshot = await _classRef.get();
-
-    if (snapshot.exists) {
-      final data = snapshot.value;
-      classSchedule.clear();
-
-      if (data is Map) {
-        for (var value in data.values) {
-          _processClassData(value);
-        }
-      } else if (data is List) {
-        for (var classData in data) {
-          _processClassData(classData);
-        }
-      }
-
-      setState(() {}); // Update the UI after processing all data
-    }
-  }
-
   void _processClassData(dynamic classData) {
     if (classData is Map) {
       final classDataMap = Map<String, dynamic>.from(classData);
@@ -94,56 +67,82 @@ class _CalendarScreenState extends State<CalendarScreen> {
           ),
         ],
       ),
-      body: Padding(
-        padding: const EdgeInsets.all(16.0),
-        child: Column(
-          children: [
-            _buildCalendarContainer(),
-            const SizedBox(height: 20),
-            Align(
-              alignment: Alignment.centerLeft,
-              child: Text(
-                'Classes on ${DateFormat('dd/MM/yyyy').format(selectedDate)}',
-                style: const TextStyle(fontSize: 20, color: Colors.white, fontFamily: 'AfacAdflux'),
-              ),
-            ),
-            const SizedBox(height: 10),
-            Expanded(
-              child: ListView.builder(
-                itemCount: _getClassesForSelectedDay().length,
-                itemBuilder: (context, index) {
-                  final classData = _getClassesForSelectedDay()[index];
-                  return FutureBuilder<List<String>>(
-                    future: Future.wait([
-                      getCourseName(classData['courseId']),
-                      getInstructorName(classData['instructor']),
-                    ]),
-                    builder: (context, snapshot) {
-                      if (snapshot.connectionState == ConnectionState.waiting) {
-                        return const Center(child: CircularProgressIndicator());
-                      }
-                      if (snapshot.hasError) {
-                        return ListTile(
-                          title: Text(classData['name']),
-                          subtitle: const Text('Error loading details'),
-                        );
-                      }
+      body: StreamBuilder<DatabaseEvent>(
+        stream: _classRef.onValue,
+        builder: (context, snapshot) {
+          if (snapshot.connectionState == ConnectionState.waiting) {
+            return const Center(child: CircularProgressIndicator());
+          }
+          if (snapshot.hasError) {
+            return const Center(child: Text('Error loading classes', style: TextStyle(color: Colors.white)));
+          }
 
-                      final courseName = snapshot.data![0];
-                      final instructorName = snapshot.data![1];
+          final data = snapshot.data?.snapshot.value;
+          classSchedule.clear();
 
-                      return SearchClassCard(
-                        classModel: ClassModel.fromJson(classData),
-                        courseName: courseName,
-                        instructorName: instructorName,
+          // Parse incoming data
+          if (data is Map) {
+            for (var value in data.values) {
+              _processClassData(value);
+            }
+          } else if (data is List) {
+            for (var classData in data) {
+              _processClassData(classData);
+            }
+          }
+
+          return Padding(
+            padding: const EdgeInsets.all(16.0),
+            child: Column(
+              children: [
+                _buildCalendarContainer(),
+                const SizedBox(height: 20),
+                Align(
+                  alignment: Alignment.centerLeft,
+                  child: Text(
+                    'Classes on ${DateFormat('dd/MM/yyyy').format(selectedDate)}',
+                    style: const TextStyle(fontSize: 20, color: Colors.white, fontFamily: 'AfacAdflux'),
+                  ),
+                ),
+                const SizedBox(height: 10),
+                Expanded(
+                  child: ListView.builder(
+                    itemCount: _getClassesForSelectedDay().length,
+                    itemBuilder: (context, index) {
+                      final classData = _getClassesForSelectedDay()[index];
+                      return FutureBuilder<List<String>>(
+                        future: Future.wait([
+                          getCourseName(classData['courseId']),
+                          getInstructorName(classData['instructor']),
+                        ]),
+                        builder: (context, snapshot) {
+                          if (snapshot.connectionState == ConnectionState.waiting) {
+                            return const Center(child: CircularProgressIndicator());
+                          }
+                          if (snapshot.hasError) {
+                            return ListTile(
+                              title: Text(classData['name']),
+                              subtitle: const Text('Error loading details'),
+                            );
+                          }
+
+                          final courseName = snapshot.data![0];
+                          final instructorName = snapshot.data![1];
+
+                          return SearchClassCard(
+                            classModel: ClassModel.fromJson(classData),
+                            courseName: courseName,
+                            instructorName: instructorName,
+                          );
+                        },
                       );
                     },
-                  );
-                },
-              ),
+                  ),
+                ),
+              ],
             ),
-          ],
-        ),
+          );
+        },
       ),
     );
   }
